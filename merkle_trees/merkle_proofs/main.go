@@ -2,11 +2,11 @@ package main
 
 import (
 	"bufio"
+	"crypto/sha256"
 	"fmt"
 	"os"
+	"strings"
 )
-
-// TODO (merkle-proof): implement per the lesson description.
 
 // Verify a Merkle proof.
 
@@ -16,12 +16,6 @@ import (
 
 // Output: VALID or INVALID.
 
-// Example:
-//
-// 01|<root>|<sibling_for_position_1>,<sibling_for_position_0>
-//
-// If hash(01) combined with siblings reaches root: VALID. Else INVALID.
-
 func main() {
 	sc := bufio.NewScanner(os.Stdin)
 	sc.Buffer(make([]byte, 1024*1024), 1024*1024)
@@ -30,6 +24,37 @@ func main() {
 		if line == "" {
 			continue
 		}
-		fmt.Println("TODO")
+
+		parts := strings.Split(line, "|")
+		if len(parts) != 3 {
+			fmt.Println("INVALID")
+			continue
+		}
+
+		tx := parts[0]
+		root := parts[1]
+		siblings := strings.Split(parts[2], ",")
+		if verifyProof(tx, root, siblings) {
+			fmt.Println("VALID")
+		} else {
+			fmt.Println("INVALID")
+		}
 	}
+}
+
+func verifyProof(tx, root string, siblings []string) bool {
+	h := sha256.Sum256([]byte(tx))
+	current := fmt.Sprintf("%x", h)
+
+	for _, sibling := range siblings {
+		left, right := current, sibling
+		if left > right {
+			left, right = right, left
+		}
+		combined := left + right
+		h = sha256.Sum256([]byte(combined))
+		current = fmt.Sprintf("%x", h)
+	}
+
+	return current == root
 }
