@@ -189,3 +189,38 @@ Bitcoin difficulty has grown ~10^14 since launch. The original Satoshi software 
 Some chains (Ethereum pre-merge) adjusted every block. Bitcoin's 2016-block window smooths short-term hashrate variance.
 
 Difficulty bombs: Ethereum had a "difficulty bomb" — gradually increasing difficulty to force the chain to upgrade. Several were defused as upgrade timelines slipped.
+
+## Transactions
+
+A **transaction** moves value from inputs to outputs. Bitcoin uses the **UTXO** model:
+
+- **Output (UTXO)**: a chunk of bitcoin owned by some address. Spendable until consumed.
+- **Input**: references a previous output to spend it. Consumed once used.
+
+```txt
+Tx1 outputs:
+  output_0:  0.5 BTC -> Alice
+  output_1:  1.5 BTC -> Bob
+
+Tx2 inputs:
+  input_0: refers to (Tx1, output_0)   -- spend Alice's 0.5
+
+Tx2 outputs:
+  output_0: 0.3 BTC -> Charlie
+  output_1: 0.2 BTC -> Alice  (change)
+```
+
+The total inputs must >= total outputs. The difference is the MINER FEE.
+
+To prove the input is YOURS, you sign with the private key matching the output's address. Bitcoin uses ECDSA over secp256k1.
+
+Validation:
+
+- Every input is signed validly
+- Every input refers to an unspent output
+- Total inputs ≥ total outputs (fees go to miner)
+- Other rules: locktime, scripts, etc.
+
+Ethereum uses an account model instead: each address has a balance. Transactions debit one balance, credit another. Simpler but requires more state per node.
+
+Bitcoin's UTXO is more privacy-friendly (each output is independent) but harder to track balance. Modern wallets aggregate via address scanning.
