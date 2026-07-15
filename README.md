@@ -159,3 +159,33 @@ Why this works:
 The 51% attack: if you have >50% of hashrate, you can OUTPACE the honest chain. You can double-spend (spend coins, then mine an alternate chain that excludes the spend). Hard but theoretically possible.
 
 Critique: PoW wastes ENORMOUS amounts of energy. Bitcoin mining ~0.5% of global electricity. Ethereum (now PoS) used to be ~1% but switched.
+
+## Difficulty Adjustment
+
+Bitcoin re-targets difficulty every 2016 blocks (~2 weeks):
+
+```txt
+new_target = old_target * (actual_time / expected_time)
+
+Where:
+  actual_time = time taken for the last 2016 blocks
+  expected_time = 2016 * 10 minutes = 20160 minutes
+
+Capped: new_target can't change by more than 4× in either direction
+```
+
+If blocks came faster than 10 min average: actual_time < expected_time → ratio < 1 → target decreases → mining harder.
+
+If slower: target increases → mining easier.
+
+This stabilizes block rate against:
+
+- Hardware advances (ASICs)
+- Miners joining/leaving
+- Network growth/shrinkage
+
+Bitcoin difficulty has grown ~10^14 since launch. The original Satoshi software target = 2^224. Today: 2^176 or so.
+
+Some chains (Ethereum pre-merge) adjusted every block. Bitcoin's 2016-block window smooths short-term hashrate variance.
+
+Difficulty bombs: Ethereum had a "difficulty bomb" — gradually increasing difficulty to force the chain to upgrade. Several were defused as upgrade timelines slipped.
