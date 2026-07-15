@@ -132,3 +132,30 @@ Verifiers must know:
 - The transaction itself
 
 Then they can confidently claim "this tx WAS in this block."
+
+## Proof of Work
+
+How do you decide WHO gets to add the next block? In a decentralized system without authorities:
+
+**Proof of Work** (Nakamoto, 2008): you must find a nonce such that `hash(block) < target`. Computing requires lots of trial-and-error.
+
+```python
+def mine(block):
+    while True:
+        if hash(block) < target:
+            return block
+        block.nonce += 1
+```
+
+The `target` controls difficulty. Lower = harder. Bitcoin adjusts target every 2016 blocks (~2 weeks) so blocks come every ~10 minutes regardless of total network hashrate.
+
+Average tries to find a valid hash: `2^256 / target`. For Bitcoin's current difficulty: ~10^25 hashes per block. At 800 EH/s network hashrate, that's ~10 minutes.
+
+Why this works:
+
+- **Honest miners** spend electricity finding valid blocks. They're rewarded with new bitcoins (block reward) + transaction fees.
+- **Attackers** would need MORE compute than honest miners combined to mine a fraudulent chain that grows faster than the honest one. Currently impossible at Bitcoin scale.
+
+The 51% attack: if you have >50% of hashrate, you can OUTPACE the honest chain. You can double-spend (spend coins, then mine an alternate chain that excludes the spend). Hard but theoretically possible.
+
+Critique: PoW wastes ENORMOUS amounts of energy. Bitcoin mining ~0.5% of global electricity. Ethereum (now PoS) used to be ~1% but switched.
