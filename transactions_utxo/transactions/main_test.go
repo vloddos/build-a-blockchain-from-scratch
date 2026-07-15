@@ -36,3 +36,17 @@ func TestRejectsDoubleSpendAndInsufficientFunds(t *testing.T) {
 		t.Fatalf("processInput() = %v, want %v", got, want)
 	}
 }
+
+func TestRejectsWrongOwner(t *testing.T) {
+	lines := []string{
+		"MINT u1 50 alice",
+		"TX u1:bob -> u2:50:carol",
+	}
+
+	got := processInput(lines)
+	want := []string{"BAD wrong_owner"}
+
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("processInput() = %v, want %v", got, want)
+	}
+}

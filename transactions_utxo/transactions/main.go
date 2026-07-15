@@ -150,8 +150,11 @@ func (l *ledger) processTransaction(line string) (string, bool) {
 		if !ok {
 			return "BAD invalid", false
 		}
-		if u.spent || u.owner != in.owner {
+		if u.spent {
 			return "BAD double_spend", false
+		}
+		if u.owner != in.owner {
+			return "BAD wrong_owner", false
 		}
 	}
 
