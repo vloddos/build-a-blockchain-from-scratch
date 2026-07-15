@@ -224,3 +224,38 @@ Validation:
 Ethereum uses an account model instead: each address has a balance. Transactions debit one balance, credit another. Simpler but requires more state per node.
 
 Bitcoin's UTXO is more privacy-friendly (each output is independent) but harder to track balance. Modern wallets aggregate via address scanning.
+
+## Double-Spend Defense
+
+Without a central authority, what stops me from spending the same coin twice?
+
+```txt
+I have 1 BTC.
+Tx_A: send 1 BTC to merchant_A
+Tx_B: send 1 BTC to merchant_B    (different output, same UTXO!)
+
+Both broadcast at once. Which is real?
+```
+
+Answer: the chain decides. Whichever tx is included in the LONGER VALID CHAIN wins. The other is rejected (its input was already spent).
+
+But what about temporary forks? Block 100 mined by miner X contains tx_A. Block 100 mined by miner Y contains tx_B. Both are valid; both extend block 99.
+
+The chain "RESOLVES" when block 101 builds on top of one of them. The other becomes an orphan.
+
+**Confirmations**: how many blocks deep your tx is. After 6 confirmations (Bitcoin convention), the chain is considered final — reorganizing 6 blocks would require >50% hashrate AND lots of luck.
+
+Merchant policy:
+
+- Coffee: 0 confirmations (low value, low risk)
+- Online purchase: 1 confirmation (~10 min)
+- Large transfer: 6 confirmations (~1 hour)
+- Custodial deposit: 100+ confirmations (paranoid)
+
+This is why Bitcoin transactions are slow. Other chains optimize:
+
+- Litecoin: 2.5 min blocks (4× faster)
+- Solana: ~400ms blocks (different consensus)
+- Lightning Network: off-chain, instant
+
+Trade-off: faster confirmation = more risk of reorg.
