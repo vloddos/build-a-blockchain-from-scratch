@@ -2,11 +2,13 @@ package main
 
 import (
 	"bufio"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"os"
+	"strconv"
+	"strings"
 )
-
-// TODO (pow): implement per the lesson description.
 
 // Mine a Block
 //
@@ -32,6 +34,27 @@ func main() {
 		if line == "" {
 			continue
 		}
-		fmt.Println("TODO")
+
+		parts := strings.SplitN(line, "|", 2)
+		if len(parts) != 2 {
+			continue
+		}
+
+		data := parts[0]
+		difficulty, err := strconv.Atoi(parts[1])
+		if err != nil || difficulty < 0 {
+			continue
+		}
+
+		prefix := strings.Repeat("0", difficulty)
+		for nonce := 0; ; nonce++ {
+			txt := fmt.Sprintf("%s:%d", data, nonce)
+			hash := sha256.Sum256([]byte(txt))
+			hexHash := hex.EncodeToString(hash[:])
+			if strings.HasPrefix(hexHash, prefix) {
+				fmt.Println(nonce)
+				break
+			}
+		}
 	}
 }
