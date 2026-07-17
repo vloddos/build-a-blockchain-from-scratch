@@ -190,7 +190,9 @@ Some chains (Ethereum pre-merge) adjusted every block. Bitcoin's 2016-block wind
 
 Difficulty bombs: Ethereum had a "difficulty bomb" — gradually increasing difficulty to force the chain to upgrade. Several were defused as upgrade timelines slipped.
 
-## Transactions
+## Transactions & UTXO
+
+### Transactions
 
 A **transaction** moves value from inputs to outputs. Bitcoin uses the **UTXO** model:
 
@@ -225,7 +227,7 @@ Ethereum uses an account model instead: each address has a balance. Transactions
 
 Bitcoin's UTXO is more privacy-friendly (each output is independent) but harder to track balance. Modern wallets aggregate via address scanning.
 
-## Double-Spend Defense
+### Double-Spend Defense
 
 Without a central authority, what stops me from spending the same coin twice?
 
@@ -260,23 +262,23 @@ This is why Bitcoin transactions are slow. Other chains optimize:
 
 Trade-off: faster confirmation = more risk of reorg.
 
-## Beyond PoW: PoS, BFT
+### Beyond PoW: PoS, BFT
 
 Proof of Work is one point in a design space, optimized for one extreme: *nobody knows who the participants are, and anyone may join or leave at will*. Relax that assumption and much cheaper consensus becomes available. An engineer's job is matching the algorithm to the trust model — which is literally this lesson's exercise.
 
-## Proof of Stake
+#### Proof of Stake
 
 Replace "one hash, one lottery ticket" with "one staked coin, one lottery ticket." Validators lock coins as collateral; the protocol pseudo-randomly selects a proposer, weighted by stake; provable misbehavior (like signing two conflicting blocks) gets the stake **slashed**. Security still costs something an attacker must acquire — but it's capital at risk instead of burned electricity. Ethereum switched in the 2022 Merge, cutting its energy use by ~99.95%; Cardano, Solana, Polkadot, and Cosmos chains are PoS-native. The honest trade-offs: the classic *nothing-at-stake* objection (voting on every fork is free unless slashing punishes it — that's precisely what slashing is for), long-range rewrites of old history using once-valid keys (countered by checkpointing / "weak subjectivity"), and a rich-get-richer tilt, since stake earns yield.
 
-## The BFT family
+#### The BFT family
 
 Byzantine Fault Tolerance comes from a different lineage — distributed-systems theory, not cryptocurrency. Lamport, Shostak, and Pease formalized the Byzantine generals problem in 1982; Castro and Liskov's **PBFT** (1999) made it practical: among `n = 3f + 1` known validators, up to `f` can be arbitrarily malicious and the rest still agree, with **immediate finality** — a committed block is final, no confirmations, no reorgs, ever. Cost: validators are a fixed, known set, and communication is O(n²) messages per decision, so counts stay in the dozens-to-hundreds. Descendants refine it: **Tendermint** (started by Jae Kwon in 2014, later developed with Ethan Buchman; the engine of Cosmos) integrates BFT with PoS validator selection; **HotStuff** (2019) got messages to O(n) and powered Facebook's Diem. Modern "PoS" chains are mostly hybrids: PoS chooses *who may vote*, a BFT-style protocol decides *how votes commit*.
 
-## And plain old Raft
+#### And plain old Raft
 
 If nodes can crash but never lie — one company's internal cluster — Byzantine defenses are pure overhead. **Raft** (and Paxos) tolerate crash faults only: `f` failures among `2f + 1` nodes, a simple elected leader, no signatures, no adversary model. This is etcd, Consul, and every "strongly consistent" database you've deployed. Using PoW for a microservice cluster is malpractice; so is using Raft between mutually distrusting banks.
 
-## The decision rubric
+#### The decision rubric
 
 |Trust model|Pick|
 |-----------|----|
@@ -287,6 +289,70 @@ If nodes can crash but never lie — one company's internal cluster — Byzantin
 
 Two axes decide everything: *is membership open or closed*? and *can participants be malicious or merely crash*? Open + malicious → PoW/PoS. Closed + malicious → BFT. Closed + honest-but-crashy → Raft.
 
-## Your exercise
+#### Your exercise
 
 Each input line describes a scenario; print exactly one token: `POW`, `POS`, `BFT`, or `RAFT` (uppercase). The graded confusion is BFT vs RAFT — both run among known nodes, so scan for *trust*: "Permissioned consortium of 7 banks" and "12 known financial institutions" are mutually distrusting parties → `BFT`; "Internal microservice cluster needing strong consistency" and "3 trusted nodes coordinating leader election" are one administrative domain → `RAFT`. Second catch: "Public, super-fast finality (Solana-like)" is `POS` — fast public finality is a stake-plus-BFT hybrid, not raw BFT, because the validator set is open.
+
+### Putting It All Together
+
+You've built every layer that makes a real blockchain work:
+
+|Layer|Lesson|
+|-----|------|
+|Block structure|Block Structure|
+|Chain validation|Chain Validation|
+|Merkle trees|Merkle Trees|
+|Merkle proofs (SPV)|Merkle Proofs|
+|Proof of Work|Proof of Work|
+|Difficulty retargeting|Difficulty Adjustment|
+|UTXO transactions|Transactions|
+|Double-spend defense|Double-Spend Defense|
+|Consensus alternatives|Beyond PoW: PoS, BFT|
+|**Real Bitcoin block hashing**|Bitcoin Block Header|
+|**ECDSA on secp256k1**|ECDSA on secp256k1|
+|**HD wallets (BIP32)**|BIP32 HD Wallets|
+|**Bitcoin Script**|Bitcoin Script|
+|**Mempool & fee selection**|Mempool & Fee Selection|
+|**Fork choice / heaviest chain**|Fork Resolution|
+|**P2P gossip**|P2P Gossip Propagation|
+
+Every column in the table corresponds to a real component in Bitcoin Core, Geth, Reth, or any major node implementation. You've hand-built each in Go and verified your code against canonical test vectors (Bitcoin's actual genesis hash, the secp256k1 generator point, sorted-Merkle proofs, etc).
+
+#### Reference implementations to study next
+
+- **Bitcoin Core** (`bitcoin/bitcoin`, ~1M lines of C++) — the reference. Read `src/validation.cpp` for chain validation; `src/script/interpreter.cpp` for Script.
+- **btcd** (`btcsuite/btcd`, Go) — friendlier to read than Bitcoin Core if you prefer Go.
+- **rust-bitcoin** (`rust-bitcoin/rust-bitcoin`) — clean Rust crates for the primitives (`hashes`, `bitcoin`, `secp256k1`).
+- **Geth** (`ethereum/go-ethereum`, Go) — most popular Ethereum client.
+- **Reth** (`paradigmxyz/reth`, Rust) — modern Ethereum rewrite, very clean.
+- **Solana validator** (`solana-labs/solana`, Rust) — PoH + PoS, very different trade-offs.
+
+#### What you've intentionally skipped
+
+These are the next big topics if you want to go deeper:
+
+- **Smart contracts**: Ethereum's EVM (Geth, Reth) or Solana's BPF VM. Programs that run on-chain with deterministic gas metering.
+- **SegWit / Taproot** (BIP-141, BIP-341): newer Bitcoin script formats with Schnorr signatures and Merkleized script trees.
+- **Layer 2**: Lightning Network (off-chain channels), Optimism / Arbitrum (optimistic rollups), zkSync / Starknet (zk-rollups).
+- **Cross-chain bridges**: Wormhole, IBC. Move assets between chains. Frequently hacked — bridge security is an open research area.
+- **Privacy coins**: Monero (ring signatures + RingCT + stealth addresses), Zcash (zk-SNARKs).
+- **MEV (Maximal Extractable Value)**: extracting value via transaction ordering. A multi-billion-dollar industry built on mempool observation.
+- **PBFT / HotStuff / Tendermint**: deeper dive into BFT consensus families for permissioned and PoS networks.
+
+#### Where blockchain shines
+
+- Permissionless value transfer (Bitcoin)
+- Programmable money / DeFi (Ethereum)
+- Censorship resistance (places where governments restrict speech / finance)
+- Auditable supply chains (some niches)
+- Bearer instruments (NFTs, regardless of opinion)
+
+#### Where blockchain doesn't
+
+- High throughput (use a database)
+- Privacy (most chains are public ledgers; opt-in privacy is complex)
+- Cheap fees during demand spikes (gas wars)
+- Reversibility (send to the wrong address = gone)
+- Complex business logic (smart-contract bugs cost billions yearly)
+
+You now understand the foundations that every blockchain shares. The exercise below is your capstone — chain together blocks, transactions, mempool, and validation into one mini-blockchain.
