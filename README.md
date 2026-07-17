@@ -259,3 +259,34 @@ This is why Bitcoin transactions are slow. Other chains optimize:
 - Lightning Network: off-chain, instant
 
 Trade-off: faster confirmation = more risk of reorg.
+
+## Beyond PoW: PoS, BFT
+
+Proof of Work is one point in a design space, optimized for one extreme: *nobody knows who the participants are, and anyone may join or leave at will*. Relax that assumption and much cheaper consensus becomes available. An engineer's job is matching the algorithm to the trust model — which is literally this lesson's exercise.
+
+## Proof of Stake
+
+Replace "one hash, one lottery ticket" with "one staked coin, one lottery ticket." Validators lock coins as collateral; the protocol pseudo-randomly selects a proposer, weighted by stake; provable misbehavior (like signing two conflicting blocks) gets the stake **slashed**. Security still costs something an attacker must acquire — but it's capital at risk instead of burned electricity. Ethereum switched in the 2022 Merge, cutting its energy use by ~99.95%; Cardano, Solana, Polkadot, and Cosmos chains are PoS-native. The honest trade-offs: the classic *nothing-at-stake* objection (voting on every fork is free unless slashing punishes it — that's precisely what slashing is for), long-range rewrites of old history using once-valid keys (countered by checkpointing / "weak subjectivity"), and a rich-get-richer tilt, since stake earns yield.
+
+## The BFT family
+
+Byzantine Fault Tolerance comes from a different lineage — distributed-systems theory, not cryptocurrency. Lamport, Shostak, and Pease formalized the Byzantine generals problem in 1982; Castro and Liskov's **PBFT** (1999) made it practical: among `n = 3f + 1` known validators, up to `f` can be arbitrarily malicious and the rest still agree, with **immediate finality** — a committed block is final, no confirmations, no reorgs, ever. Cost: validators are a fixed, known set, and communication is O(n²) messages per decision, so counts stay in the dozens-to-hundreds. Descendants refine it: **Tendermint** (started by Jae Kwon in 2014, later developed with Ethan Buchman; the engine of Cosmos) integrates BFT with PoS validator selection; **HotStuff** (2019) got messages to O(n) and powered Facebook's Diem. Modern "PoS" chains are mostly hybrids: PoS chooses *who may vote*, a BFT-style protocol decides *how votes commit*.
+
+## And plain old Raft
+
+If nodes can crash but never lie — one company's internal cluster — Byzantine defenses are pure overhead. **Raft** (and Paxos) tolerate crash faults only: `f` failures among `2f + 1` nodes, a simple elected leader, no signatures, no adversary model. This is etcd, Consul, and every "strongly consistent" database you've deployed. Using PoW for a microservice cluster is malpractice; so is using Raft between mutually distrusting banks.
+
+## The decision rubric
+
+|Trust model|Pick|
+|-----------|----|
+|Open membership, anyone can join, maximize censorship-resistance|POW|
+|Open membership, capital-based security, slashing, energy-efficient|POS|
+|Known members who don't trust each other (consortium of banks)|BFT|
+|Known members you fully trust (your own infra), need consistency|RAFT|
+
+Two axes decide everything: *is membership open or closed*? and *can participants be malicious or merely crash*? Open + malicious → PoW/PoS. Closed + malicious → BFT. Closed + honest-but-crashy → Raft.
+
+## Your exercise
+
+Each input line describes a scenario; print exactly one token: `POW`, `POS`, `BFT`, or `RAFT` (uppercase). The graded confusion is BFT vs RAFT — both run among known nodes, so scan for *trust*: "Permissioned consortium of 7 banks" and "12 known financial institutions" are mutually distrusting parties → `BFT`; "Internal microservice cluster needing strong consistency" and "3 trusted nodes coordinating leader election" are one administrative domain → `RAFT`. Second catch: "Public, super-fast finality (Solana-like)" is `POS` — fast public finality is a stake-plus-BFT hybrid, not raw BFT, because the validator set is open.
