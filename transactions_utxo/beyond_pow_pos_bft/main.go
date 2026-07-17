@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"strings"
 )
 
 // Pick Consensus
@@ -22,6 +23,44 @@ import (
 // 3 trusted nodes coordinating leader election                          -> RAFT
 // 12 known financial institutions agreeing on settlements              -> BFT
 
+func pickConsensus(s string) string {
+	line := strings.ToLower(s)
+
+	if strings.Contains(line, "leader election") ||
+		strings.Contains(line, "microservice cluster") ||
+		strings.Contains(line, "trusted nodes") ||
+		strings.Contains(line, "internal") {
+		return "RAFT"
+	}
+
+	if strings.Contains(line, "consortium") ||
+		strings.Contains(line, "banks") ||
+		strings.Contains(line, "financial institutions") ||
+		strings.Contains(line, "known") ||
+		strings.Contains(line, "settlements") {
+		return "BFT"
+	}
+
+	if strings.Contains(line, "slashing") ||
+		strings.Contains(line, "eco-friendly") ||
+		strings.Contains(line, "finality") ||
+		strings.Contains(line, "solana") ||
+		strings.Contains(line, "stake") ||
+		strings.Contains(line, "validator") {
+		return "POS"
+	}
+
+	if strings.Contains(line, "permissionless") ||
+		strings.Contains(line, "public") ||
+		strings.Contains(line, "decentralization") ||
+		strings.Contains(line, "bitcoin") ||
+		strings.Contains(line, "open membership") {
+		return "POW"
+	}
+
+	return "POW"
+}
+
 func main() {
 	sc := bufio.NewScanner(os.Stdin)
 	sc.Buffer(make([]byte, 1024*1024), 1024*1024)
@@ -30,6 +69,6 @@ func main() {
 		if line == "" {
 			continue
 		}
-		fmt.Println("TODO")
+		fmt.Println(pickConsensus(line))
 	}
 }
