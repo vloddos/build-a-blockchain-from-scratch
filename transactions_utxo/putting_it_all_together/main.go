@@ -186,13 +186,13 @@ func main() {
 		case "MINE":
 			data := strings.Join(parts[1:], " ")
 			block := bc.appendBlock(data, nil)
-			fmt.Printf("%d %s %d\n", block.height, block.hash, block.nonce)
+			fmt.Printf("height=%d hash=%s nonce=%d\n", block.height, block.hash, block.nonce)
 		case "TX":
 			data := strings.Join(parts[1:], " ")
 			bc.mempool = append(bc.mempool, data)
 		case "MINE_TX":
 			block := bc.appendBlock(strings.Join(bc.mempool, ","), bc.mempool)
-			fmt.Printf("%d %s %d\n", block.height, block.hash, block.nonce)
+			fmt.Printf("height=%d hash=%s nonce=%d\n", block.height, block.hash, block.nonce)
 			bc.mempool = nil
 		case "VALIDATE":
 			valid, height := bc.validate()
