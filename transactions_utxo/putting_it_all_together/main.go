@@ -128,7 +128,8 @@ func (bc *blockchain) validate() (bool, int) {
 }
 
 func computeBlockHash(b *block) string {
-	header := fmt.Sprintf("%d|%s|%s|%s|%d|%d", b.height, b.prevHash, b.data, b.merkleRoot, b.timestamp, b.nonce)
+	// header := fmt.Sprintf("%d|%s|%s|%s|%d|%d", b.height, b.prevHash, b.data, b.merkleRoot, b.timestamp, b.nonce)
+	header := fmt.Sprintf("%s|%s|%d|%d", b.prevHash, b.merkleRoot, b.timestamp, b.nonce)
 	sum := sha256.Sum256([]byte(header))
 	return hex.EncodeToString(sum[:])
 }

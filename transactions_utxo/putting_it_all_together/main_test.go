@@ -1,6 +1,11 @@
 package main
 
-import "testing"
+import (
+	"bufio"
+	"reflect"
+	"strings"
+	"testing"
+)
 
 func TestGenesisAndValidation(t *testing.T) {
 	chain := newBlockchain()
@@ -103,3 +108,116 @@ func TestMiningAddsBlockAndKeepsChainValid(t *testing.T) {
 // VALID
 // height=1 hash=00bef4f0b4845647c0b9a762dc23da76746261a840909e1b816ba196081a838d nonce=1
 // VALID
+
+func runScenario(input string) []string {
+	state := newConfirmationState()
+	var outputs []string
+
+	scanner := bufio.NewScanner(strings.NewReader(input))
+	for scanner.Scan() {
+		line := scanner.Text()
+		output, shouldPrint := processLine(line, state)
+		if shouldPrint {
+			outputs = append(outputs, output)
+		}
+	}
+
+	return outputs
+}
+
+func TestConfirmationTrackingScenarios(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected []string
+	}{
+		{
+			name: "validate genesis",
+			input: strings.Join([]string{
+				"VALIDATE",
+			}, "\n"),
+			expected: []string{
+				"VALID",
+			},
+		},
+		{
+			name: "mine first",
+			input: strings.Join([]string{
+				"MINE first",
+				"VALIDATE",
+			}, "\n"),
+			expected: []string{
+				"height=1",
+				"VALID",
+			},
+		},
+		{
+			name: "mine txs",
+			input: strings.Join([]string{
+				"TX hello",
+				"TX world",
+				"MINE_TX",
+				"VALIDATE",
+			}, "\n"),
+			expected: []string{
+				"height=1",
+				"VALID",
+			},
+		},
+		{
+			name: "mine multiple sequential",
+			input: strings.Join([]string{
+				"MINE a",
+				"MINE b",
+				"MINE c",
+				"VALIDATE",
+			}, "\n"),
+			expected: []string{
+				"height=1",
+				"height=2",
+				"height=3",
+				"VALID",
+			},
+		},
+		{
+			name: "mine txs across blocks",
+			input: strings.Join([]string{
+				"TX one",
+				"MINE_TX",
+				"MINE plain",
+				"TX two",
+				"TX three",
+				"MINE_TX",
+				"VALIDATE",
+			}, "\n"),
+			expected: []string{
+				"height=1",
+				"height=2",
+				"height=3",
+				"VALID",
+			},
+		},
+		{
+			name: "validate before and after mining",
+			input: strings.Join([]string{
+				"VALIDATE",
+				"MINE only",
+				"VALIDATE",
+			}, "\n"),
+			expected: []string{
+				"VALID",
+				"height=1",
+				"VALID",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := runScenario(tt.input)
+			if !reflect.DeepEqual(got, tt.expected) {
+				t.Fatalf("unexpected output\ninput:\n%s\nexpected: %q\nactual:   %q", tt.input, tt.expected, got)
+			}
+		})
+	}
+}
