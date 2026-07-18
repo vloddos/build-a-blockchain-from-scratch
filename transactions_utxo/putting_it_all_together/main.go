@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"os"
 	"strings"
-	"time"
 )
 
 // Capstone Blockchain
@@ -36,9 +35,9 @@ type block struct {
 	data         string
 	transactions []string
 	merkleRoot   string
-	timestamp    int64
-	nonce        int
-	hash         string
+	// timestamp    int64
+	nonce int
+	hash  string
 }
 
 type blockchain struct {
@@ -61,7 +60,7 @@ func (bc *blockchain) mineBlock(data string, txs []string, height int, prevHash 
 		data:         data,
 		transactions: append([]string(nil), txs...),
 		merkleRoot:   merkleRoot,
-		timestamp:    time.Now().Unix(),
+		// timestamp:    time.Now().Unix(),
 	}
 
 	prefix := strings.Repeat("0", difficulty)
@@ -128,8 +127,8 @@ func (bc *blockchain) validate() (bool, int) {
 }
 
 func computeBlockHash(b *block) string {
-	// header := fmt.Sprintf("%d|%s|%s|%s|%d|%d", b.height, b.prevHash, b.data, b.merkleRoot, b.timestamp, b.nonce)
-	header := fmt.Sprintf("%s|%s|%d|%d", b.prevHash, b.merkleRoot, b.timestamp, b.nonce)
+	//header := fmt.Sprintf("%d|%s|%s|%s|%d|%d", b.height, b.prevHash, b.data, b.merkleRoot, b.timestamp, b.nonce)
+	header := fmt.Sprintf("%d|%s|%s|%s|%d", b.height, b.prevHash, b.data, b.merkleRoot, b.nonce)
 	sum := sha256.Sum256([]byte(header))
 	return hex.EncodeToString(sum[:])
 }
@@ -150,13 +149,19 @@ func merkleRootFor(txs []string) string {
 
 	for len(leaves) > 1 {
 		if len(leaves)%2 == 1 {
+			//last := leaves[len(leaves)-1]
+			//leaves = append(leaves, append([]byte(nil), last...))
 			last := leaves[len(leaves)-1]
-			leaves = append(leaves, append([]byte(nil), last...))
+			dup := make([]byte, len(last))
+			copy(dup, last)
+			leaves = append(leaves, dup)
 		}
 		next := make([][]byte, 0, len(leaves)/2)
 		for i := 0; i < len(leaves); i += 2 {
-			combined := append(append([]byte(nil), leaves[i]...), leaves[i+1]...)
-			h := sha256.Sum256(combined)
+			// combined := append(append([]byte(nil), leaves[i]...), leaves[i+1]...)
+			// h := sha256.Sum256(combined)
+			combined := append(leaves[i], leaves[i+1]...)
+			h := sha256.Sum256([]byte(hex.EncodeToString(combined)))
 			node := make([]byte, len(h))
 			copy(node, h[:])
 			next = append(next, node)
